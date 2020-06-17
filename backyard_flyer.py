@@ -46,26 +46,30 @@ class BackyardFlyer(Drone):
 
         This triggers when `MsgID.LOCAL_POSITION` is received and self.local_position contains new data
         """
+        # if we're in takeoff mode, transition to waypoint mode
         if self.flight_state == States.TAKEOFF:
-            if -1 * self.local_position[2] > 0.95 * self.target_position[2]:
-                print(-1*self.local_position[2], 0.95 * self.target_position[2])
+            altitude = -1 * self.local_position[2]
+            if (altitude > 0.95 * self.target_position[2]):
+                #print(-1*self.local_position[2], 0.95 * self.target_position[2])
                 # we're ready to move on
                 self.all_waypoints = np.append(self.all_waypoints, [[self.local_position[0],
                                                                      self.local_position[1],
                                                                     -self.local_position[2]]], axis=0)
-                print("appended ")
-                print(np.array([[self.local_position[0],
-                                 self.local_position[1],
-                                -self.local_position[2]]]))
+                #print("appended ")
+                #print(np.array([[self.local_position[0],
+                #                 self.local_position[1],
+                #                -self.local_position[2]]]))
                 self.waypoint_transition()
                 #print("waypoints AFTER: ", self.all_waypoints.shape[0])
 
+        # if we're in waypoint mode and we have more waypoints to hit, keep running in waypoint mode
         elif self.flight_state == States.WAYPOINT and self.waypoint_number < self.all_waypoints.shape[0]:
             if (np.linalg.norm(self.target_position - np.array([self.local_position[0],
                                                                 self.local_position[1],
                                                                -self.local_position[2]])) < 0.1):
                 self.waypoint_transition()
 
+        # if we've reached last waypoint, switch to landing mode
         elif self.waypoint_number == self.all_waypoints.shape[0]:
             if (np.linalg.norm(self.target_position - np.array([self.local_position[0],
                                                                 self.local_position[1],
